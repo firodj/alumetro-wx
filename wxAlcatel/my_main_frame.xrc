@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+    <object class="wxFrame" name="main_frame" subclass="MyMainFrame">
+        <style>wxDEFAULT_FRAME_STYLE</style>
+        <title>wxAlcatel wxWidgets App</title>
+        <flag>wxEXPAND</flag>
+        <object class="wxStatusBar" name="status_bar">
+            <fields>2</fields>
+        </object>
+    </object>
+
+    <object class="wxMenuBar" name="main_menu">
+        <object class="wxMenu">
+            <style>wxMENU_TEAROFF</style>
+            <label>_File</label>
+            <object class="wxMenuItem" name="menu_exit">
+                <label>E_xit</label>
+                <accel>CTRL+X</accel>
+                <help>Quit this program</help>
+            </object>
+        </object>
+        <object class="wxMenu">
+            <style>wxMENU_TEAROFF</style>
+            <label>_Help</label>
+            <object class="wxMenuItem" name="menu_about">
+                <label>_About</label>
+                <help>Show about dialog</help>
+            </object>
+            <object class="wxMenuItem" name="menu_test">
+              <label>_Test</label>
+              <help>Testing some function</help>
+            </object>
+        </object>
+    </object>
+	
+	<object class="wxBitmap" name="my_new_bitmap" stock_id="wxART_NEW" />
+</resource>
