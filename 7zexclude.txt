@@ -1,7 +1,0 @@
-*.ncb
-wxAlcatel_*.7z
-*vc_mswu\
-*vc_mswud\
-*vc_mswuddll\
-*vc_mswauiuddll\
-Debug\
