@@ -7,6 +7,7 @@
 #include <wx/aui/auibar.h>
 #include <wx/aui/auibook.h>
 #include <wx/dataview.h>
+#include "Document.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -39,6 +40,7 @@ private:
 	wxAuiToolBar *mp_toolbar;
 	wxAuiNotebook *mp_notebook;
 	CTerminal *mp_terminal;
+	CDocument m_doc;
 	
     // any class wishing to process wxWidgets events must use this macro
     DECLARE_EVENT_TABLE()

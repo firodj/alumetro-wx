@@ -92,6 +92,9 @@ CMainFrame::CMainFrame(): m_mgr(this)
 	CMainFrame::g_logtextctrl = new wxLogTextCtrl(mp_textctrl);
 	wxLog::SetActiveTarget( g_logtextctrl );
 	wxLogMessage("Ready.");
+
+	m_doc.Open("User/indosat.sqlite");
+	m_doc.GetAllRouters();
 }
 
 CMainFrame::~CMainFrame()

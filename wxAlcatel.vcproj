@@ -199,7 +199,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(WXWIN)\contrib\include&quot;;&quot;$(WXWIN)\lib\vc_dll\mswud&quot;;&quot;$(WXWIN)\include&quot;;&quot;..\libssh2-1.4.4_DEV\include&quot;;&quot;D:\LIB\libssh-0.6.3\include&quot;;&quot;D:\LIB\agg-svn\agg-2.4\include\&quot;;&quot;D:\LIB\agg-svn\agg-2.4\agg2d&quot;;&quot;D:\LIB\agg-svn\agg-2.4\font_win32_tt&quot;"
+				AdditionalIncludeDirectories="&quot;$(WXWIN)\contrib\include&quot;;&quot;$(WXWIN)\lib\vc_dll\mswud&quot;;&quot;$(WXWIN)\include&quot;;&quot;D:\LIB\libssh2-1.4.4_DEV\include&quot;;&quot;D:\LIB\libssh-0.6.3\include&quot;;&quot;D:\LIB\agg-svn\agg-2.4\include\&quot;;&quot;D:\LIB\agg-svn\agg-2.4\agg2d&quot;;&quot;D:\LIB\agg-svn\agg-2.4\font_win32_tt&quot;;&quot;D:\LIB\wxSQLite3\wxsqlite3-3.0.6&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;__WXMSW__;_DEBUG;__WXDEBUG__;WXUSINGDLL;UNICODE;_UNICODE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -223,11 +223,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="wxmsw30ud_core.lib wxbase30ud.lib wxmsw30ud_xrc.lib wxmsw30ud_adv.lib wxmsw30ud_aui.lib wxbase30ud_net.lib wxtiffd.lib wxjpegd.lib wxpngd.lib wxzlibd.lib wxexpatd.lib wxregexud.lib winmm.lib comctl32.lib rpcrt4.lib wsock32.lib odbc32.lib libssh2d.lib ssh.lib agg.lib aggplatform.lib agg2d.lib"
+				AdditionalDependencies="wxmsw30ud_core.lib wxbase30ud.lib wxmsw30ud_xrc.lib wxmsw30ud_adv.lib wxmsw30ud_aui.lib wxbase30ud_net.lib wxtiffd.lib wxjpegd.lib wxpngd.lib wxzlibd.lib wxexpatd.lib wxregexud.lib winmm.lib comctl32.lib rpcrt4.lib wsock32.lib odbc32.lib wxcode_msw30ud_wxsqlite3.lib libssh2d.lib ssh.lib agg.lib aggplatform.lib agg2d.lib"
 				OutputFile="$(SolutionDir)Debug\wxAlcatel.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="&quot;$(WXWIN)\contrib\lib&quot;;&quot;$(WXWIN)\lib\vc_dll&quot;;..\Debug;&quot;D:\LIB\libssh-0.6.3\build-msw\src\Debug&quot;;&quot;D:\LIB\agg-svn\agg-2.4\build-msw\lib\Debug&quot;"
+				AdditionalLibraryDirectories="&quot;$(WXWIN)\contrib\lib&quot;;&quot;$(WXWIN)\lib\vc_dll&quot;;Debug;&quot;D:\LIB\libssh-0.6.3\build-msw\src\Debug&quot;;&quot;D:\LIB\agg-svn\agg-2.4\build-msw\lib\Debug&quot;;D:\LIB\wxSQLite3\vc_mswuddll"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(SolutionDir)Debug\wxAlcatel.pdb"
@@ -347,7 +347,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AggCanvasImpl.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\App.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\dbschema.cxx"
+				>
+			</File>
+			<File
+				RelativePath=".\Document.cpp"
 				>
 			</File>
 			<File
@@ -420,11 +432,35 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AggCanvasImpl.h"
+				>
+			</File>
+			<File
 				RelativePath=".\App.h"
 				>
 			</File>
 			<File
+				RelativePath=".\dbschema.hxx"
+				>
+			</File>
+			<File
+				RelativePath=".\Document.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MainFrame.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Router.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RouterInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RouterLink.h"
 				>
 			</File>
 			<File

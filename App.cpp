@@ -25,6 +25,7 @@
 
 #include "App.h"
 #include "MainFrame.h"
+#include "wx/wxsqlite3.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -64,13 +65,16 @@ bool CApp::OnInit()
     // success: wxApp::OnRun() will be called which will enter the main message
     // loop and the application will run. If we returned false here, the
     // application would exit immediately.
-
+	
+	wxSQLite3Database::InitializeSQLite();
 
     return true;
 };
 
 int CApp::OnExit()
 {
+	wxSQLite3Database::ShutdownSQLite();
+
 	libssh2_exit();
 	
     // return the standard exit code

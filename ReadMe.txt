@@ -109,4 +109,123 @@ http://www.boost.org/doc/libs/1_55_0/libs/graph/doc/adjacency_list.html
 d3js.org
 graphviz
 
+The wxAggShape should be used to define a Lines(links-connetors) and a Nodes(routers).
+-> using path_storage, or others
 
+
+////////////////// AGG Hit-Detection //
+
+
+Hi George, 
+
+First of all, the problem of that "point-in-polygon" function is that it 
+doesn't handle the non-zero fill rule, only even-odd. It can give you the 
+wrong result. The following links can help: 
+
+http://www.acm.org/tog/editors/erich/ptinpoly/
+http://softsurfer.com/Archive/algorithm_0103/algorithm_0103.htm
+
+In AGG the common way of hit-testing is to use the rasterizer. You do it as 
+if you wanted to draw, but instead of calling agg::render_scanlines() you 
+call ras.hit_test(x,y); where x,y are integer coordinates on the screen. 
+Yes, it looks slow, but remember it isn't slower (actually faster) than 
+drawing itself. If rendering of the scene is fairly fast, the hit-test will 
+also be fast. 
+
+The advantage is that it works identically with drawing. And it also works 
+for strokes, considering line caps and line joins. Well, you may want to 
+increase the sensible area with some tolerance. In this case you can simply 
+increase the line width accordingly. The line width is set in the world 
+coordinates, considering the viewport and the transformer. So that, you have 
+to consider it. For example if you want to add exactly one pixel tolerance, 
+you set something like this: 
+if(hit_test_mode) 
+{ 
+   double tolerance = 1.0; 
+   tolerance /= m_affine.scale(); 
+   m_stroke.width(m_width + tolerance); 
+} 
+Where m_affine contains viewport transformations. Or you can use 
+tolerance /= m_affine.scale() * m_viewport.scale(); 
+If they are separate. 
+
+It's also possible to use calc_line_point_distance(), but to restrict it to 
+the line segments you check the line for the bounding box. Suppose, 
+x1,y1,x2,y2 are the coordinates of the line segment, and x,y - the hit-test 
+point. You do: 
+
+agg::rect_d bbox(x1,y1,x2,y2); 
+bbox.normalize(); // swap coordinates if necessary. 
+bbox.x1 -= tolerance; 
+bbox.y1 -= tolerance; 
+bbox.x2 += tolerance; 
+bbox.y2 += tolerance; 
+if(x >= bbox.x1 && x <= bbox.x2 && y >= bbox.y1 && y <= bbox.y2) 
+{ 
+    if(agg::calc_line_to_point_distance(x1,y1,x2,y2, x,y) <= tolerance) 
+    { 
+        ...the line segment is hit. 
+    } 
+} 
+
+But this method won't consider line caps and joins. 
+
+McSeem 
+
+Hi, 
+
+one problem I had with hit-testing was that agg::calc_line_point_distance() 
+gives you the distance to the infinite line described by the given points, 
+not the "segment". So I came up with this horrible beast (I'm sure lots of 
+people on this list have something much nicer, please add your insights): 
+
+static float 
+distance_to_curve(const Point& p, 
+      const Point& a, const Point& aOut, 
+      const Point& bIn, const Point& b) 
+{ 
+   agg::curve4 curve(a.x, a.y, aOut.x, aOut.y, 
+                    bIn.x, bIn.y, b.x, b.y); 
+
+   float segDist = FLT_MAX; 
+   double x1, y1, x2, y2; 
+   unsigned cmd = curve.vertex(&x1, &y1); 
+   while (!agg::is_stop(cmd)) { 
+      cmd = curve.vertex(&x2, &y2); 
+      // first figure out if point is between segment 
+      // start and end points 
+      double a = agg::calc_distance(p.x, p.y, x2, y2); 
+      double b = agg::calc_distance(p.x, p.y, x1, y1); 
+
+      float currentDist = min_c(a, b); 
+
+      if (a > 0.0 && b > 0.0) { 
+         double c = agg::calc_distance(x1, y1, x2, y2); 
+
+         double alpha = acos((b*b + c*c - a*a) / (2*b*c)); 
+         double beta = acos((a*a + c*c - b*b) / (2*a*c)); 
+    
+         if (alpha <= PI2 && beta <= PI2) { 
+            currentDist = fabs(agg::calc_line_point_distance(x1, y1, 
+                                                             x2, y2, 
+                                                             p.x, p.y)); 
+         } 
+      } 
+
+      if (currentDist < segDist) { 
+         segDist = currentDist; 
+      } 
+      x1 = x2; 
+      y1 = y2; 
+   } 
+   return segDist; 
+} 
+
+This method is suited for curves, you can extract the part you need for 
+lines. And of course you need to first check the bounding box of your entire 
+path before using the more elaborate methods. 
+
+Best regards, 
+-Stephan 
+
+http://anti-grain-geometry.1086185.n5.nabble.com/Hit-testing-on-a-line-td1027.html
