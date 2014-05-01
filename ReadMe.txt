@@ -15,6 +15,30 @@ wxWindows.vcproj
 IMPORTANT NOTE:
     Please set WXWIN Environment Variables to wxWidgets directory.
 
+///////////////////////////
+Backup by Git:
+further read --> http://thelucid.com/2008/12/02/git-setting-up-a-remote-repository-and-doing-an-initial-push/
+
+Setup remote repo (on flashdisk):
+$ git remote -v
+
+$ ls /cygdrive/
+$ ls /cygdrive/f/repo/
+
+if not exsits:
+$ mkdir wxalcatel.git
+$ cd wxalcatel.git/
+$ git init --bare
+
+$ git remote add usb_f /cygdrive/f/repo/wxalcatel.git
+
+Commands:
+$ git status
+$ git add *.cpp *.h
+$ git commit -m "Log message"
+$ git push usb_f master
+
+
 /////////////////////////////////////////////////////////////////////////////
 Other notes:
 
