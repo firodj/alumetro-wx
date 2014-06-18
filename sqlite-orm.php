@@ -1,4 +1,8 @@
 <?php
+/* Author : Fadhil Mandaga <firodj@gmail.com>
+   Version: 3 June 2014
+   Notes  : Assuming no BLOB field as primary key.
+ */
 $typedef = array(
     'uint64' => array('type' => 'wxULongLong',
 		'get' 	=> 'WXSQLGET_LL(?)',
@@ -40,6 +44,11 @@ $typedef = array(
 		'set' 	=> '?	= _q.GetDouble(_c++)',
 		'init' 	=> '?	= 0.0',
 		'fmt' 	=> "%f"),
+    'blob' => array('type' => 'wxMemoryBuffer',
+		'get' 	=> '?',
+		'set' 	=> '_q.GetBlob(_c++, ?)',
+		'init' 	=> '?.Clear()',
+		'fmt' 	=> "'%s'"),
 );
 
 function camel_case($str) {
@@ -60,6 +69,18 @@ if (!file_exists($schema_file)) {
 	die( PHP_EOL );
 }
 
+$mt_sql = filemtime($schema_file);
+$mt_hxx = NULL;
+$mt_cxx = NULL;
+if (file_exists("DbSchema.hxx"))
+	$mt_hxx = filemtime("DbSchema.hxx");
+if (file_exists("DbSchema.cxx"))
+	$mt_cxx = filemtime("DbSchema.cxx");
+if ($mt_hxx && ($mt_hxx == $mt_cxx) && ($mt_cxx == $mt_sql)) {
+	echo 'DbSchema is up to date. (to force creating them, delete them)';
+	die( PHP_EOL );
+}
+
 $handle = fopen($schema_file, "r");
 $state = 0;
 $tables = array();
@@ -74,6 +95,7 @@ if ($handle) {
 				$primaries = array();
 				$autoinc = null;
 				$creates = array();
+                $has_blob = false;
 				
 				if (strpos($matches[1], 'EXISTS') === false) {
 					//echo $matches[1];
@@ -112,7 +134,10 @@ if ($handle) {
 					$len = $matches[2];
 				}
 				
-				if ($wd[$i] == 'TEXT') {
+                if ($wd[$i] == 'BLOB') {
+					$type = 'blob'; $i++;
+                    $has_blob = true;
+                } else if ($wd[$i] == 'TEXT') {
 					$type = 'string'; $i++;
 				} else if ($wd[$i] == 'CHAR') {
 					$type = 'string'; $i++;
@@ -153,12 +178,13 @@ if ($handle) {
 			}
 			
 			if ($state == 0) {
-				$classname = 'C'.camel_case($table_name).'Base';
+				$classname = 'Db'.camel_case($table_name).'Base';
 				$tables[$table_name] = array('fields'=>$fields, 
 					'primaries'=> $primaries, 
 					'creates'  => $creates,
 					'classname'=> $classname,
-					'autoinc'  => $autoinc);
+					'autoinc'  => $autoinc,
+                    'has_blob' => $has_blob);
 				//echo 'STORE:'.$table_name,PHP_EOL;
 			}
 		}
@@ -190,20 +216,20 @@ class wxSQLite3ResultSet;
     #define WXSQLGET_DT(m_mber) (const char*)(m_mber).FormatISOCombined()
 #endif
 
-class CDbTableBase {
+class DbBaseTable {
 public:
-    CDbTableBase(wxSQLite3Database *_db = NULL): m_tablename(TNone), m_db(_db) {};
+    DbBaseTable(wxSQLite3Database *_db = NULL): m_tablename(TbNone), m_db(_db) {};
     wxSQLite3Database* GetDb() const { return m_db; }
     void SetDb(wxSQLite3Database *_db) { m_db = _db; }
     
 public:
     enum {
-		TNone	= 0,
+		TbNone	= 0,
 <?php
 $i = 0;
 foreach ($tables as $table_name=>$table) {
 	$i++; ?>
-		<?php echo 'T'.camel_case($table_name).'	= '.$i ?>,
+		<?php echo 'Tb'.camel_case($table_name).'	= '.$i ?>,
 <?php } ?>
     } m_tablename;
     
@@ -246,6 +272,10 @@ $f_updates = array();
 $f_wheres = array();
 $f_members = array();
 $f_params = array();
+$f_qmark = array();
+$f_qmark2 = array();
+$f_qmarku = array();
+$f_qmarkw = array();
 
 foreach ($table['fields'] as $field_name=>$field_type) {
 	$f_inits[] = str_replace('?', $field_name, $typedef[$field_type]['init']).';';
@@ -257,16 +287,21 @@ foreach ($table['fields'] as $field_name=>$field_type) {
 		$f_names2[] = '['.$field_name.']';
 		$f_fmts2[] = $fmt;
 		$f_gets2[] = $get;
+        $f_qmark2[] = '?';
 	}
 	$f_names[] = '['.$field_name.']';
 	$f_fmts[] = $fmt;
+    $f_qmark[] = '?';
 	$f_gets[] = $get;
 	
 	$f_updates[$get] = '['.$field_name.'] = '.$fmt;
-	
+	$f_qmarku[$get] = '['.$field_name.'] = ?';
+    
 	$getpar = str_replace('?', $field_name.'_', $typedef[$field_type]['get']);
 	if (in_array($field_name, $table['primaries'])) {
 		$f_wheres[$get] = '['.$field_name.'] = '.$fmt;
+        $f_qmarkw[$get] = '['.$field_name.'] = ?';
+        
 		$f_params[$getpar] = $typedef[$field_type]['type'].'& '.$field_name.'_';
 	}
 		
@@ -279,7 +314,7 @@ $implode_params  = implode(", ", $f_params);
 
 $header_contents.=<<<EOS
 // Class $table[classname]
-class $table[classname]: public CDbTableBase {
+class $table[classname]: public DbBaseTable {
 public:
 	// members
 	$implode_members;
@@ -288,7 +323,8 @@ public:
 	virtual bool BeforeInsert()	{ return true; };
 	virtual bool BeforeUpdate()	{ return true; };
 	virtual bool AfterDelete()	{ return true; };
-	
+	virtual int  AfterFetch()	{ return 0; };
+    
 	// statics
 	// create table
 	static bool InitTable(wxSQLite3Database& _db);
@@ -300,8 +336,8 @@ public:
 	$table[classname](wxSQLite3Database *_db=NULL);
 
 	int FetchResult(wxSQLite3ResultSet& _q, int _c=0);
-	bool Insert(bool _autoinc=false);
-	bool Update();
+	virtual bool Insert(bool _autoinc=false);
+	virtual bool Update();
 	bool Delete();
 };
 
@@ -309,7 +345,7 @@ public:
 EOS;
 ?>
 /******************************************************************************
- * Class <?php echo $table['classname']. PHP_EOL; ?>
+ * Class <?php echo $table['classname']. PHP_EOL; ?> 
  ******************************************************************************/
 
 // (static) create table if not exists
@@ -323,18 +359,18 @@ bool <?php echo $table['classname']; ?>::InitTable(wxSQLite3Database& _db)
 
 // c-tors
 <?php echo $table['classname']; ?>::<?php echo $table['classname']; ?>(wxSQLite3Database *_db):
-		CDbTableBase(_db) 
+		DbBaseTable(_db) 
 {
-	m_tablename = <?php echo 'T'.camel_case($table_name); ?>;
-	<?php echo implode(PHP_EOL."\t", $f_inits); ?>
-
+	m_tablename = <?php echo 'Tb'.camel_case($table_name); ?>;
+	<?php echo implode(PHP_EOL."\t", $f_inits); ?> 
 }
 
 // fetch results
 int <?php echo $table['classname']; ?>::FetchResult(wxSQLite3ResultSet& _q, int _c)
 {
-	<?php echo implode(PHP_EOL."\t", $f_sets); ?>
-	return _c;
+	<?php echo implode(PHP_EOL."\t", $f_sets); ?> 
+    int _cmod = AfterFetch();
+	return _c +_cmod;
 }
 	
 // inserts
@@ -342,25 +378,37 @@ bool <?php echo $table['classname']; ?>::Insert(bool _autoinc)
 {
 	if (!BeforeInsert()) return false;
 	int _affected = 0;
+
+<?php if ($table['has_blob']): ?>
+    // This table has BLOB, need Manual Prepare Statement
+    // --------------------------------------------------   
+<?php 
+    if ($table['autoinc']) {
+    $sql = "INSERT INTO [{$table_name}] (".implode(', ',$f_names).") \\\r\n\t\tVALUES (".implode(', ',$f_qmark).")";
+    } else {
+    $sql = "INSERT INTO [{$table_name}] (".implode(', ',$f_names2).") \\\r\n\t\tVALUES (".implode(', ',$f_qmark2).")";
+    }
+    echo "
+    wxString _sql =\"$sql\";
+    "; 
+?>
+<?php else: ?>
 	wxSQLite3StatementBuffer _sql;
 <?php if ($table['autoinc']): ?>
 <?php $sql = "INSERT INTO [{$table_name}] (".implode(', ',$f_names).") \\\r\n\t\tVALUES (".implode(', ',$f_fmts).")"; ?>
 	if (!_autoinc) {
 		_sql.Format("<?php echo $sql; ?>",
-			<?php echo implode(",".PHP_EOL."\t\t\t", $f_gets); ?>
-
+			<?php echo implode(",".PHP_EOL."\t\t\t", $f_gets); ?> 
 		);
 	} else {
 <?php endif; ?>
 <?php $sql2 = "INSERT INTO [{$table_name}] (".implode(', ',$f_names2).") \\\r\n\t\tVALUES (".implode(', ',$f_fmts2).")"; ?>
 		_sql.Format("<?php echo $sql2; ?>",
-			<?php echo implode(",".PHP_EOL."\t\t\t", $f_gets2); ?>
-
+			<?php echo implode(",".PHP_EOL."\t\t\t", $f_gets2); ?> 
 		);
-<?php if ($table['autoinc']): ?>
+<?php if ($table['autoinc']): ?> 
 	}
-<?php endif; ?>
-
+<?php endif; ?> 
 	try {
 		_affected = m_db->ExecuteUpdate( _sql );
 	} catch (wxSQLite3Exception e) {
@@ -370,13 +418,14 @@ bool <?php echo $table['classname']; ?>::Insert(bool _autoinc)
 	}
 	
 	if (_affected > 0) {
-<?php if ($table['autoinc']): ?>
+<?php if ($table['autoinc']): ?> 
 		long _rowid = m_db->GetLastRowId().ToLong();
 		if (_rowid != 0) <?php echo $table['autoinc']; ?> = _rowid;
-<?php endif; ?>
+<?php endif; ?> 
 		return true;
 	}
 
+<?php endif; // End has_blob ?>
 	return false;
 }
 
@@ -386,11 +435,24 @@ bool <?php echo $table['classname']; ?>::Update()
 	if (!BeforeUpdate()) return false;
 	
 	int _affected = 0;
-	wxSQLite3StatementBuffer _sql;
-<?php $sql = "UPDATE {$table_name} SET ".implode(', ', array_values($f_updates))." \\\r\n\t\tWHERE ".implode(' AND ', array_values($f_wheres)); ?>
-	_sql.Format("<?php echo $sql; ?>",
-		<?php echo implode(','. PHP_EOL ."\t\t", array_merge(array_keys($f_updates), array_keys($f_wheres)) ); ?>
+<?php if ($table['has_blob']): ?>
+    // This table has BLOB, need Manual Prepare Statement
+    // --------------------------------------------------    
+<?php 
+    $sql = "UPDATE [{$table_name}] SET ".
+        implode(', ', array_values($f_qmarku)).
+        " \\\r\n\t\tWHERE ".
+        implode(' AND ', array_values($f_qmarkw));
+    echo "
+    wxString _sql =\"$sql\";
+    "; 
+?>
+    <?php else: ?>
 
+	wxSQLite3StatementBuffer _sql;
+<?php $sql = "UPDATE [{$table_name}] SET ".implode(', ', array_values($f_updates))." \\\r\n\t\tWHERE ".implode(' AND ', array_values($f_wheres)); ?> 
+	_sql.Format("<?php echo $sql; ?>",
+		<?php echo implode(','. PHP_EOL ."\t\t", array_merge(array_keys($f_updates), array_keys($f_wheres)) ); ?> 
 	);
 
 	try {
@@ -405,6 +467,7 @@ bool <?php echo $table['classname']; ?>::Update()
 		return true;
 	}
 
+<?php endif; // End has_blob ?>
 	return false;
 }
 	
@@ -413,10 +476,9 @@ bool <?php echo $table['classname']; ?>::Delete()
 {
 	int _affected = 0;
 	wxSQLite3StatementBuffer _sql;
-<?php $sql = "DELETE FROM [{$table_name}] WHERE ".implode(' AND ', array_values($f_wheres)); ?>
+<?php $sql = "DELETE FROM [{$table_name}] WHERE ".implode(' AND ', array_values($f_wheres)); ?> 
 	_sql.Format("<?php echo $sql; ?>",
-		<?php echo implode(','. PHP_EOL ."\t\t\t", array_keys($f_wheres)); ?>
-
+		<?php echo implode(','. PHP_EOL ."\t\t\t", array_keys($f_wheres)); ?> 
 	);
 
 	try {
@@ -439,10 +501,9 @@ bool <?php echo $table['classname']; ?>::Select(<?php echo implode(", ", $f_para
 {
 	bool _retok = false;
 	wxSQLite3StatementBuffer _sql;
-<?php $sql = "SELECT * FROM [{$table_name}] WHERE ".implode(' AND ', array_values($f_wheres)); ?>
+<?php $sql = "SELECT * FROM [{$table_name}] WHERE ".implode(' AND ', array_values($f_wheres)); ?> 
 	_sql.Format("<?php echo $sql; ?>",
-		<?php echo implode(','. PHP_EOL ."\t\t\t", array_keys($f_params)); ?>
-
+		<?php echo implode(','. PHP_EOL ."\t\t\t", array_keys($f_params)); ?> 
 	);
 
 	wxSQLite3ResultSet _q = _db.ExecuteQuery(_sql);
@@ -461,7 +522,10 @@ bool <?php echo $table['classname']; ?>::Select(<?php echo implode(", ", $f_para
 <?php
 
 file_put_contents("DbSchema.hxx", $header_contents);
-file_put_contents("DbSchema.cxx", ob_get_contents());
+touch("DbSchema.hxx", $mt_sql);
 
+file_put_contents("DbSchema.cxx", ob_get_contents());
 ob_end_flush();
-?>
+touch("DbSchema.cxx", $mt_sql);
+
+echo 'Done.',PHP_EOL;

@@ -351,27 +351,43 @@
 				>
 			</File>
 			<File
-				RelativePath=".\App.cpp"
+				RelativePath=".\AlcatelMetro.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\dbschema.cxx"
+				RelativePath=".\CApp.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\Document.cpp"
+				RelativePath=".\CDocument.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\MainFrame.cpp"
+				RelativePath=".\CMainFrame.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CRouterListPanel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CTerminal.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CTerminalViewPanel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CTopologyViewPanel.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DbSchema.cxx"
 				>
 			</File>
 			<File
 				RelativePath=".\term_thread_ssh.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Terminal.cpp"
 				>
 			</File>
 			<File
@@ -436,19 +452,39 @@
 				>
 			</File>
 			<File
-				RelativePath=".\App.h"
+				RelativePath=".\AlcatelMetro.h"
 				>
 			</File>
 			<File
-				RelativePath=".\dbschema.hxx"
+				RelativePath=".\CApp.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Document.h"
+				RelativePath=".\CDocument.h"
 				>
 			</File>
 			<File
-				RelativePath=".\MainFrame.h"
+				RelativePath=".\CMainFrame.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CRouterListPanel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CTerminal.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CTerminalViewPanel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CTopologyViewPanel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DbSchema.hxx"
 				>
 			</File>
 			<File
@@ -465,10 +501,6 @@
 			</File>
 			<File
 				RelativePath=".\term_thread_ssh.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Terminal.h"
 				>
 			</File>
 			<File
