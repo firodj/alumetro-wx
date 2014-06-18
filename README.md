@@ -1,16 +1,9 @@
-========================================================================
-    wxWindows : "wxAlcatel" Project Overview
-========================================================================
+wx-alcatel-metro
+================
 
-wxWindows has created this "wxAlcatel" project for you as a starting point.
+wxAlcatel is wxWidgets application to help maintenance routers.
 
-This file contains a summary of what you will find in each of the files that make up your project.
-
-wxWindows.vcproj
-    This is the main project file for projects generated using an Application Wizard. 
-    It contains information about the version of the product that generated the file, and 
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
+wxVideoTerminal is wxWidgets component to emulate video terminal such as VT100.
 
 IMPORTANT NOTE:
     Please set WXWIN Environment Variables to wxWidgets directory.
